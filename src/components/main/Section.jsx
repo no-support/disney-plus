@@ -4,16 +4,14 @@ import instance from '../../api/movieAxios';
 import requests from '../../api/request';
 import { Mousewheel, Navigation, Pagination, A11y } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import 'swiper/css/mousewheel';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/scrollbar';
-import 'swiper/css/effect-fade';
-import 'swiper/css/effect-flip';
+import 'swiper/css/bundle';
+import useModal from '../../hooks/useModal';
+import Modal from '../shared/Modal';
 
 const Section = ({ title = '', fetchUrl = '' }) => {
-  const [results, setResults] = useState([]);
+  const [movies, setMovies] = useState([]);
+  const [movie, setMovie] = useState({});
+  const { opened, openModal, closeModal } = useModal();
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -21,7 +19,7 @@ const Section = ({ title = '', fetchUrl = '' }) => {
         const {
           data: { results },
         } = await instance.get(`${fetchUrl}`);
-        setResults(results);
+        setMovies(results);
       } catch (error) {
         if (error.response && error.response.status === 404) {
           console.error('데이터를 찾을 수 없습니다.');
@@ -42,9 +40,9 @@ const Section = ({ title = '', fetchUrl = '' }) => {
         <Title>{title}</Title>
         <Swiper
           modules={[Mousewheel, Navigation, Pagination, A11y]}
-          spaceBetween={50}
-          slidesPerView={6}
-          slidesPerGroup={6}
+          // spaceBetween={50}
+          slidesPerView={1}
+          slidesPerGroup={1}
           mousewheel
           navigation
           style={{
@@ -60,27 +58,31 @@ const Section = ({ title = '', fetchUrl = '' }) => {
               return '<span class="' + className + '"></span>';
             },
           }}
-          // breakpoints={{
-          //   320: {
-          //     slidesPerView: 1,
-          //   },
-          //   768: {
-          //     slidesPerView: 2,
-          //   },
-          //   1024: {
-          //     slidesPerView: 6,
-          //   },
-          // }}
-          onSwiper={(swiper) => console.log(swiper)}
-          // onSlideChange={() => console.log('slide change')}
+          breakpoints={{
+            320: {
+              slidesPerView: 2,
+              slidesPerGroup: 2,
+            },
+            768: {
+              slidesPerView: 4,
+              slidesPerGroup: 4,
+            },
+            1024: {
+              slidesPerView: 6,
+              slidesPerGroup: 6,
+            },
+          }}
+          // onSwiper={(swiper) => {}}}
+          // onSlideChange={() => {}}
         >
-          {results.map((result) => (
-            <SwiperSlide key={result.id}>
+          {movies.map((movie) => (
+            <SwiperSlide key={movie.id}>
               <Img
-                src={`${requests.fetchImg}/w300${result.backdrop_path}`}
+                src={`${requests.fetchImg}/w300${movie.backdrop_path}`}
                 alt="thumbnail"
                 onClick={() => {
-                  console.log('Section.jsx - : result.id', result.id);
+                  setMovie(movie);
+                  openModal();
                 }}
               />
             </SwiperSlide>
@@ -91,6 +93,19 @@ const Section = ({ title = '', fetchUrl = '' }) => {
           />
         </Swiper>
       </SectionWrapper>
+
+      <Modal opened={opened} onClose={closeModal}>
+        <ModalImg
+          src={`${requests.fetchImg}/w500${movie.backdrop_path}`}
+          alt="poster"
+        />
+        <ModalContent>
+          <span>{movie.release_data}</span>
+          <span className="title">{movie.title}</span>
+          <span>평점: {movie.vote_average}</span>
+          <span className="detail">{movie.overview}</span>
+        </ModalContent>
+      </Modal>
     </>
   );
 };
@@ -104,11 +119,34 @@ const Title = styled.div`
 `;
 
 const Img = styled.img`
-  width: 200px;
+  width: 100%;
   transition: transform 0.3s ease;
   cursor: pointer;
   &:hover {
     transform: scale(1.1);
+  }
+`;
+
+const ModalImg = styled.img`
+  width: 100%;
+`;
+
+const ModalContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 20px;
+  color: white;
+  & > span:nth-child(1)::before {
+    content: '100% for you';
+  }
+  & > .title {
+    font-size: 1.5rem;
+  }
+  & > .detail {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    /* TODO: multiline ellipsis when overflow */
   }
 `;
 export default Section;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -39,18 +39,20 @@ const InputComponent = () => {
   const [searchParams] = useSearchParams();
   const q = searchParams.get('q');
   const [searchQuery, setSearchQuery] = useState(q || '');
-
+  const inputElement = useRef();
   const navigate = useNavigate();
 
   const onChangeHandler = (e) => {
     const q = e.target.value;
     setSearchQuery(q);
     navigate(`/search?q=${q}`);
+    // inputElement.current.focus(); // not work
   };
 
   useEffect(() => {
     if (pathname === '/search') {
-      document.getElementById('q').focus();
+      // document.getElementById('q').focus();
+      inputElement.current.focus();
     }
   }, [pathname]);
 
@@ -62,6 +64,7 @@ const InputComponent = () => {
         id="q"
         value={searchQuery}
         onChange={onChangeHandler}
+        ref={inputElement}
       />
     </label>
   );
